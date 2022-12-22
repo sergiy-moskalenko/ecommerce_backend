@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'phonenumber_field',
+    'mptt',
+    'debug_toolbar',
 
     'accounts.apps.AccountsConfig',
     'store.apps.StoreConfig',
@@ -56,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'ecommerce.urls'
@@ -126,7 +129,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-MEDIA_URl = 'images/'
+MEDIA_URl = 'media/'
 
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -151,3 +154,7 @@ EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]

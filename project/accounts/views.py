@@ -75,7 +75,7 @@ class LogoutView(APIView):
 
     def delete(self, request, *args, **kwargs):
         request.user.auth_token.delete()
-        return Response('User Logged out successfully')
+        return Response({'message': 'User Logged out successfully'}, status=status.HTTP_200_OK)
 
 
 class PasswordResetEmailView(GenericAPIView):
@@ -99,7 +99,6 @@ class PasswordResetDoneView(GenericAPIView):
 
     def patch(self, request, *args, **kwargs):
         try:
-            print(request.data['uid'])
             pk = force_str(urlsafe_base64_decode(request.data['uid']))
             instance = User.objects.get(id=int(pk))
             if not default_token_generator.check_token(instance, request.data['token']):

@@ -1,11 +1,8 @@
 import uuid
 
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError, AuthenticationFailed
+from rest_framework.exceptions import ValidationError
 
 from accounts.models import User
 
@@ -92,19 +89,6 @@ class SetNewPasswordSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('uid', 'token', 'password')
-
-    # def validate(self, attrs):
-    #     uid = attrs.get('uid')
-    #     token = attrs.get('token')
-    #     try:
-    #         pk = force_str(urlsafe_base64_decode(uid))
-    #         user = User.objects.get(id=pk)
-    #         if not default_token_generator.check_token(user, token):
-    #             raise AuthenticationFailed('The reset link is invalid', 401)
-    #     except User.DoesNotExist:
-    #         raise ValidationError("User doesn't exits")
-    #     attrs['user'] = user
-    #     return attrs
 
     def update(self, instance, validated_data):
         instance.set_password(validated_data['password'])
