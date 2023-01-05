@@ -1,12 +1,23 @@
 from django.contrib import admin
 from mptt.admin import DraggableMPTTAdmin, TreeRelatedFieldListFilter
 
-from store.models import Product, Category, Option, Value, ProductOptionValue, Favorite
+from store.models import Product, Category, Option, Value, ProductOptionValue, Favorite, ProductImage
+
+
+class ProductImageAdminInline(admin.StackedInline):
+    model = ProductImage
+    extra = 1
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('product')
 
 
 class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     list_display = ('name', 'slug', 'price', 'is_published',)
+    inlines = (
+        ProductImageAdminInline,
+    )
 
 
 admin.site.register(Product, ProductAdmin)

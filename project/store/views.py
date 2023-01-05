@@ -1,14 +1,18 @@
 from django.db.models import Prefetch
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import DjangoObjectPermissions, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from store.models import Category, Product, Favorite
-from store.serializers import (CategoriesSerializer,
-                               ProductCreateSerializer,
-                               ProductListSerializer,
-                               ProductDetailSerializer)
+from store.serializers import (
+    CategoriesSerializer,
+    ProductCreateSerializer,
+    ProductListSerializer,
+    ProductDetailSerializer,
+    AddProductImagesSerializer
+)
 
 
 class CategoriesListView(generics.ListAPIView):
@@ -17,6 +21,7 @@ class CategoriesListView(generics.ListAPIView):
 
 
 class ProductCreateView(generics.CreateAPIView):
+    permission_classes = (DjangoObjectPermissions | IsAdminUser,)
     serializer_class = ProductCreateSerializer
     queryset = Product.objects.all()
 
@@ -43,7 +48,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 
 
 class FavoriteProductAddDeleteView(APIView):
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
     bad_request_message = 'An error has occurred'
 
     def post(self, request, *args, **kwargs):
@@ -59,3 +64,13 @@ class FavoriteProductAddDeleteView(APIView):
         product_slug = self.kwargs['slug']
         Favorite.objects.filter(product__slug=product_slug, user=request.user).delete()
         return Response({'detail': 'User deleted product'}, status=status.HTTP_200_OK)
+
+
+class AddProductImagesView(generics.CreateAPIView):
+    permission_classes = (DjangoObjectPermissions | IsAdminUser,)
+    serializer_class = AddProductImagesSerializer
+    queryset = Product.objects.all()
+
+    def perform_create(self, serializer):
+        product = get_object_or_404(Product, slug=self.kwargs.get('slug'))
+        serializer.save(product=product)

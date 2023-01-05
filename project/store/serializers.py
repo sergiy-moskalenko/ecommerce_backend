@@ -2,7 +2,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from store.models import Category, Product, Option, Value
+from store.models import Category, Product, Option, Value, ProductImage
 
 
 class FavoriteMixin:
@@ -27,7 +27,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ('name', 'description', 'price', 'image', 'category',)
+        fields = ('name', 'description', 'price', 'image', 'category')
 
 
 class ProductListSerializer(FavoriteMixin, serializers.ModelSerializer):
@@ -59,10 +59,11 @@ class ProductOptionSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(FavoriteMixin, serializers.ModelSerializer):
     options = serializers.SerializerMethodField()
     favorite = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ('name', 'image', 'price', 'description', 'options', 'favorite')
+        fields = ('name', 'image', 'price', 'description', 'options', 'favorite', 'images')
 
     def get_options(self, obj):
         qs_options = Option.objects.filter(products_options__product=obj).distinct().prefetch_related(
@@ -73,3 +74,28 @@ class ProductDetailSerializer(FavoriteMixin, serializers.ModelSerializer):
             )
         )
         return ProductOptionSerializer(qs_options, many=True).data
+
+    def get_images(self, obj):
+        request = self.context.get('request')
+        urls = []
+        for image in obj.images.all():
+            urls.append(request.build_absolute_uri(image.image.url))
+        return urls
+
+
+class AddProductImagesSerializer(serializers.ModelSerializer):
+    images = serializers.ListField(
+        child=serializers.ImageField(use_url=False),
+        write_only=True, max_length=5
+    )
+
+    class Meta:
+        model = Product
+        fields = ('images', )
+
+    def create(self, validated_data):
+        images = validated_data['images']
+        product = validated_data['product']
+        objs = [ProductImage(product=product, image=image) for image in images]
+        ProductImage.objects.bulk_create(objs)
+        return product

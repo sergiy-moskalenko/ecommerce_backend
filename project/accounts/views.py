@@ -18,7 +18,8 @@ from accounts.serializers import (
     LoginSerializer,
     VerifyEmailSerializer,
     PasswordResetEmailSerializer,
-    SetNewPasswordSerializer, ChangePasswordSerializer,
+    SetNewPasswordSerializer,
+    ChangePasswordSerializer,
 )
 from accounts.utils import send_verify_email, send_reset_password
 

@@ -28,8 +28,6 @@ class Category(MPTTModel):
         verbose_name_plural = 'Categories'
 
     def __str__(self):
-        # qs = self.get_ancestors(include_self=True).values_list('name', flat=True)
-        # return ' -> '.join(qs)
         return self.name
 
 
@@ -82,3 +80,8 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.product.name[:15]}'
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(blank=True, null=True, upload_to='images/', )
