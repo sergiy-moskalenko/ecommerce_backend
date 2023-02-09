@@ -1,7 +1,16 @@
 from django.contrib import admin
 from mptt.admin import DraggableMPTTAdmin, TreeRelatedFieldListFilter
 
-from store.models import Product, Category, Option, Value, ProductOptionValue, Favorite, ProductImage
+from store.models import (
+    Category,
+    Favorite,
+    Product,
+    ProductFilter,
+    ProductImage,
+    ProductOptionValue,
+    Option,
+    Value,
+)
 
 
 class ProductImageAdminInline(admin.StackedInline):
@@ -52,6 +61,7 @@ admin.site.register(Option, OptionAdmin)
 
 class ProductOptionValueAdmin(admin.ModelAdmin):
     list_display = ('product', 'value')
+    ordering = ('product', 'option  ')
 
 
 admin.site.register(ProductOptionValue, ProductOptionValueAdmin)
@@ -62,3 +72,12 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Favorite, FavoriteAdmin)
+
+
+class ProductFilterAdmin(admin.ModelAdmin):
+    list_display = ('category', 'option', 'position', 'hide')
+    ordering = ('-category', 'position')
+    list_filter = ('category', )
+
+
+admin.site.register(ProductFilter, ProductFilterAdmin)

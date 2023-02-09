@@ -9,7 +9,7 @@ class FavoriteMixin:
     def get_favorite(self, obj):
         request = self.context.get('request')
         if request.user.is_authenticated:
-            return obj.favorites.all().exists()
+            return obj.favorites.exists()
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
@@ -91,7 +91,7 @@ class AddProductImagesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('images', )
+        fields = ('images',)
 
     def create(self, validated_data):
         images = validated_data['images']
@@ -99,3 +99,7 @@ class AddProductImagesSerializer(serializers.ModelSerializer):
         objs = [ProductImage(product=product, image=image) for image in images]
         ProductImage.objects.bulk_create(objs)
         return product
+
+
+class FilterSerializer(ProductOptionSerializer):
+    pass

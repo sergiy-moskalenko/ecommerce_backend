@@ -1,17 +1,25 @@
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Max, Min
+from django_filters import rest_framework as filters
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import DjangoObjectPermissions, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import (
+    AllowAny,
+    IsAdminUser,
+    IsAuthenticated,
+    DjangoObjectPermissions,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from store.models import Category, Product, Favorite
+from store.filters import ProductFilter, product_filter
+from store.models import Category, Favorite, Product,  Option, Value
 from store.serializers import (
+    AddProductImagesSerializer,
     CategoriesSerializer,
+    FilterSerializer,
     ProductCreateSerializer,
-    ProductListSerializer,
     ProductDetailSerializer,
-    AddProductImagesSerializer
+    ProductListSerializer,
 )
 
 
@@ -30,15 +38,20 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductListSerializer
 
     def get_queryset(self):
-        qs = Category.objects.filter(slug=self.kwargs['slug'])
-        qs_category = qs.get_descendants(include_self=True)
-        qs_product = Product.objects.filter(category__in=qs_category)
+        qs_category = Category.objects.filter(slug=self.kwargs['slug'])
+        qs_category_in = qs_category.get_descendants(include_self=True)
+        qs = Product.objects.filter(category__in=qs_category_in)
         user = self.request.user
+        qs = product_filter(qs, self.request.query_params)
         if user.is_authenticated:
-            return qs_product.prefetch_related(
+            return qs.prefetch_related(
                 Prefetch('favorites', queryset=Favorite.objects.filter(user=self.request.user))
             )
-        return qs_product
+        return qs
+
+    permission_classes = (AllowAny,)
+    # filter_backends = (filters.DjangoFilterBackend,)
+    # filterset_class = ProductFilter
 
 
 class ProductDetailView(generics.RetrieveAPIView):
@@ -74,3 +87,32 @@ class AddProductImagesView(generics.CreateAPIView):
     def perform_create(self, serializer):
         product = get_object_or_404(Product, slug=self.kwargs.get('slug'))
         serializer.save(product=product)
+
+
+class ProductFilterListView(generics.ListAPIView):
+    serializer_class = FilterSerializer
+
+    def get_queryset(self):
+        qs_category = Category.objects.filter(slug=self.kwargs['slug'])
+        qs_category_in = qs_category.get_descendants(include_self=True)
+        qs = Option.objects.filter(
+            product_filter__category__in=qs_category,
+            product_filter__hide=False,
+            product_filter__position__isnull=False
+        ) \
+            .order_by('product_filter__position') \
+            .prefetch_related(
+            Prefetch('values',
+                     queryset=Value.objects.filter(products_values__product__category__in=qs_category_in).distinct(),
+                     to_attr='product_values')
+        )
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response_data = self.get_queryset().aggregate(
+            price_min=Min('products_options__product__price'),
+            price_max=Max('products_options__product__price'))
+        response_data['filters'] = response.data
+        response.data = response_data
+        return response

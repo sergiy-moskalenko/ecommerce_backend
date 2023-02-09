@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.text import slugify
 from mptt.fields import TreeForeignKey
@@ -85,3 +86,18 @@ class Favorite(models.Model):
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(blank=True, null=True, upload_to='images/', )
+
+
+class ProductFilter(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='product_filter')
+    option = models.ForeignKey(Option, on_delete=models.CASCADE, related_name='product_filter')
+    position = models.PositiveSmallIntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(999)])
+    hide = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['position']
+        unique_together = ['category', 'option']
