@@ -27,7 +27,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ('name', 'description', 'price', 'image', 'category')
+        fields = ('name', 'description', 'price', 'discount_price', 'image', 'category')
 
 
 class ProductListSerializer(FavoriteMixin, serializers.ModelSerializer):
@@ -35,7 +35,7 @@ class ProductListSerializer(FavoriteMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('image', 'name', 'price', 'favorite')
+        fields = ('image', 'name', 'price', 'discount_price', 'favorite')
 
 
 class ValueSerializer(serializers.ModelSerializer):

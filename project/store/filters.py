@@ -1,16 +1,31 @@
+from django.db.models.functions import Coalesce
 from django_filters import rest_framework as filters
 from store.models import Value
+
+
+class CustomOrderFilter(filters.OrderingFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra['choices'] += [
+            ('price', 'Price'),
+            ('-price', 'Price (descending)'),
+        ]
+
+    def filter(self, qs, value):
+        if any(v in ['price', '-price'] for v in value):
+            if '-price' in value:
+                qs = qs.order_by(Coalesce('discount_price', 'price').desc())
+            if 'price' in value:
+                qs = qs.order_by(Coalesce('discount_price', 'price').asc())
+            return qs
+        return super().filter(qs, value)
 
 
 class ProductFilter(filters.FilterSet):
     price = filters.RangeFilter()
     value = filters.CharFilter(field_name='value', method='filter_value')
     q = filters.CharFilter(field_name='name', lookup_expr='icontains')
-    o = filters.OrderingFilter(
-        fields=(
-            ('price', 'price'),
-        ),
-    )
+    o = CustomOrderFilter()
 
     def filter_value(self, queryset, name, value):
         if value:
@@ -45,8 +60,10 @@ def product_filter(queryset, query_params):
         qs = qs.filter(price__lte=price_max_query)
     if price_min_query:
         qs = qs.filter(price__gte=price_min_query)
-    if order_price:
-        qs = qs.order_by(order_price)
+    if order_price == '-price':
+        qs = qs.order_by(Coalesce('discount_price', 'price').desc())
+    if order_price == 'price':
+        qs = qs.order_by(Coalesce('discount_price', 'price').asc())
     if search_query:
         qs = qs.filter(name__icontains=search_query)
     return qs

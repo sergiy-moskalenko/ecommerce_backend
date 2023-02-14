@@ -1,4 +1,5 @@
 from django.db.models import Prefetch, Max, Min
+from django.db.models.functions import Coalesce
 from django_filters import rest_framework as filters
 from rest_framework import generics, status
 from rest_framework.generics import get_object_or_404
@@ -110,9 +111,12 @@ class ProductFilterListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        response_data = self.get_queryset().aggregate(
-            price_min=Min('products_options__product__price'),
-            price_max=Max('products_options__product__price'))
+        product_price = Coalesce('discount_price', 'price')
+        qs_category = Category.objects.filter(slug=self.kwargs['slug'])
+        qs_category_in = qs_category.get_descendants(include_self=True)
+        response_data = Product.objects.filter(category__in=qs_category_in).aggregate(
+            price_min=Min(product_price),
+            price_max=Max(product_price))
         response_data['filters'] = response.data
         response.data = response_data
         return response

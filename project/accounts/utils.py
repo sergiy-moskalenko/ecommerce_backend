@@ -37,4 +37,3 @@ def send_reset_password(user_data):
         recipient_list=[to_email],
         fail_silently=False,
     )
-

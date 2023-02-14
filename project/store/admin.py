@@ -23,7 +23,7 @@ class ProductImageAdminInline(admin.StackedInline):
 
 class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
-    list_display = ('name', 'slug', 'price', 'is_published',)
+    list_display = ('name', 'price', 'discount_price', 'discount_percent', 'is_published',)
     inlines = (
         ProductImageAdminInline,
     )
@@ -61,7 +61,7 @@ admin.site.register(Option, OptionAdmin)
 
 class ProductOptionValueAdmin(admin.ModelAdmin):
     list_display = ('product', 'value')
-    ordering = ('product', 'option  ')
+    ordering = ('product', 'option')
 
 
 admin.site.register(ProductOptionValue, ProductOptionValueAdmin)
