@@ -21,7 +21,8 @@ from accounts.serializers import (
     SetNewPasswordSerializer,
     ChangePasswordSerializer,
 )
-from accounts.utils import send_verify_email, send_reset_password
+from accounts.tasks import send_verify_email_task
+from ecommerce.celery import app
 
 
 class RegisterView(CreateAPIView):
@@ -33,7 +34,7 @@ class RegisterView(CreateAPIView):
         serializer.save()
         user_data = serializer.validated_data
         try:
-            send_verify_email(user_data=user_data)
+            send_verify_email_task.delay(user_data['username'], user_data['email'])
         except BadHeaderError:
             return Response({'message': 'Failed retry after some time'})
         except SMTPException:
@@ -67,7 +68,7 @@ class LoginView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
+        token, _ = Token.objects.get_or_create(user=user)
         return Response({'token': token.key})
 
 
@@ -87,7 +88,7 @@ class PasswordResetEmailView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         try:
-            send_reset_password(user_data=user)
+            app.send_task('accounts.tasks.send_reset_password_task', args=(user.username, user.email))
         except BadHeaderError:
             return Response({'message': 'Failed retry after some time'})
         except SMTPException:

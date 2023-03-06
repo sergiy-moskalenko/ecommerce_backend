@@ -52,7 +52,7 @@ def product_filter(queryset, query_params):
     order_price = ''.join(query.pop('o', ''))
 
     for option, value in query.items():
-        s = ''.join(i if i.isdigit() else ' ' for i in ','.join(value))
+        s = ''.join(i if i.isdecimal() else ' ' for i in ','.join(value))
         value = [i for i in s.split()]
         qs = qs.filter(options_values__option=option,
                        options_values__value__in=value)

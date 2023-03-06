@@ -95,6 +95,9 @@ DATABASES = {
         'PORT': os.environ.get('DB_PORT'),
     }
 }
+# CREATE USER project_usr with password 'project_db_password';
+# CREATE DATABASE project_db OWNER project_usr;
+# ALTER ROLE project_usr WITH CREATEDB;
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -176,3 +179,9 @@ LOGGING = {
         }
     }
 }
+
+# Celery settings
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')  # RabbitMQ
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')  # Redis
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
