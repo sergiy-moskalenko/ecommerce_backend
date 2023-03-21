@@ -50,11 +50,11 @@ class LoginSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise ValidationError({'email': "User with this email doesn't exits"})
+            raise serializers.ValidationError({'email': "User with this email doesn't exits"})
         if not user.check_password(password):
-            raise ValidationError({'message': 'Incorrect Login credentials'})
+            raise serializers.ValidationError({'message': 'Incorrect Login credentials'})
         if not user.is_active:
-            raise ValidationError({'message': 'Please check your inbox and verify your email address'})
+            raise serializers.ValidationError({'message': 'Please check your inbox and verify your email address'})
         attrs['user'] = user
         return attrs
 
@@ -71,7 +71,7 @@ class PasswordResetEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise ValidationError({'email': "User with this email doesn't exits"})
+            raise serializers.ValidationError({'email': "User with this email doesn't exits"})
         attrs['user'] = user
         return attrs
 
@@ -118,9 +118,9 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         new_password = attrs['new_password']
         user = self.context['request'].user
         if not user.check_password(old_password):
-            raise ValidationError({'message': 'Incorrect credentials'})
+            raise serializers.ValidationError({'message': 'Incorrect credentials'})
         if old_password == new_password:
-            raise ValidationError({'message': "Your current password can't be with new password"})
+            raise serializers.ValidationError({'message': "Your current password can't be with new password"})
         return attrs
 
     def update(self, instance, validated_data):

@@ -7,6 +7,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('store/', include('store.urls')),
+    path('order/', include('order.urls')),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
 

@@ -1,10 +1,9 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, ValidationError
 from django.db import models
 from django.utils.text import slugify
 from math import ceil
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-from rest_framework.exceptions import ValidationError
 from unidecode import unidecode
 
 from accounts.models import User

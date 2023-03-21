@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     'accounts.apps.AccountsConfig',
+    'order.apps.OrderConfig',
     'store.apps.StoreConfig',
 ]
 
