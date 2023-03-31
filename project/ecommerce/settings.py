@@ -170,15 +170,42 @@ EMAIL_USE_TLS = True
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} ({asctime}) {module} {process:d} {thread:d} '
+                      '{message} (Line: {lineno:d} [{pathname}])',
+            'datefmt': '%d-%m-%Y %H:%M:%S',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
-        'console': {'class': 'logging.StreamHandler'}
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'error.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        }
     },
     'loggers': {
+        'order.tgbot': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'DEBUG'
-        }
-    }
+            'level': 'DEBUG',
+        },
+    },
 }
 
 # Celery settings
@@ -186,3 +213,9 @@ CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')  # RabbitMQ
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND')  # Redis
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+# Telegram setting
+TG_BOT_TOKEN = os.environ.get('TG_BOT_TOKEN')
+TG_CHAT_ID = os.environ.get('TG_CHAT_ID')
+
+

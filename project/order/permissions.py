@@ -1,13 +1,6 @@
 from rest_framework import permissions
 
 
-class IsOrderPending(permissions.BasePermission):
-    message = 'Updating or deleting closed order is not allowed.'
-
-    def has_object_permission(self, request, view, obj):
-        return obj.status == 'P'
-
-
 class IsOrderByCustomerOrAdmin(permissions.BasePermission):
     """
     Allows access to admin users or to the appropriate customer.
