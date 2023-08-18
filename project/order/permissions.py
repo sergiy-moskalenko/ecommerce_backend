@@ -1,19 +1,15 @@
 from rest_framework import permissions
 
 
-class IsOrderByCustomerOrAdmin(permissions.BasePermission):
+class IsOrderByCustomer(permissions.BasePermission):
     """
-    Allows access to admin users or to the appropriate customer.
+    Allows the corresponding client to access.
     """
 
     def has_permission(self, request, view):
-        if view.action in ('create',):
+        if request.method == 'POST':
             return True
         return request.user.is_authenticated is True
 
     def has_object_permission(self, request, view, obj):
-        return obj.customer == request.user or request.user.is_staff
-
-
-
-
+        return obj.customer == request.user

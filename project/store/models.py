@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator, MaxValueValidator, ValidationError
+from django.core.validators import ValidationError
 from django.db import models
 from django.utils.text import slugify
 from math import ceil
@@ -38,12 +38,27 @@ class Product(models.Model):
     image = models.ImageField(blank=True, null=True, upload_to='images/')
     name = models.CharField(max_length=250, )
     slug = models.SlugField(max_length=100, unique=True)
-    price = models.DecimalField(validators=[MinValueValidator(0)], max_digits=7, decimal_places=2)
-    discount_price = models.DecimalField(validators=[MinValueValidator(1)], max_digits=7, decimal_places=2,
-                                         blank=True, null=True, )
+    price = models.DecimalField(max_digits=7, decimal_places=2)
+    discount_price = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, )
     description = models.TextField()
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_price_not_negative",
+                check=models.Q(price__gt=0),
+            ),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_discount_price_not_zero",
+                check=models.Q(discount_price__gt=0) | models.Q(discount_price__isnull=True),
+            ),
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_price_more_than_discount_price",
+                check=models.Q(price__gt=models.F('discount_price')),
+            )
+        ]
 
     @property
     def discount_percent(self):
@@ -52,7 +67,7 @@ class Product(models.Model):
             return discount
 
     def clean(self):
-        if self.price < self.discount_price:
+        if self.discount_price and self.price < self.discount_price:
             raise ValidationError(f'Discount price: {self.discount_price} must be less than price: {self.price}')
         if self.discount_price == 0:
             raise ValidationError(f"Discount price can't be 0. Maybe you wanted to leave it empty")
@@ -106,11 +121,7 @@ class ProductImage(models.Model):
 class ProductFilter(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='product_filter')
     option = models.ForeignKey(Option, on_delete=models.CASCADE, related_name='product_filter')
-    position = models.PositiveSmallIntegerField(
-        default=None,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(1), MaxValueValidator(999)])
+    position = models.PositiveSmallIntegerField()
     hide = models.BooleanField(default=False)
 
     class Meta:

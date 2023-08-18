@@ -17,6 +17,5 @@ def send_message_to_tg(text):
     try:
         response = requests.post(url, json=params)
         response.raise_for_status()
-    except Exception:
+    except requests.RequestException:
         logger.error("Error", exc_info=True)
-

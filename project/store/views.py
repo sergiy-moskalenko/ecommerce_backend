@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from store.filters import ProductFilter, product_filter
-from store.models import Category, Favorite, Product,  Option, Value
+from store.models import Category, Favorite, Product, Option, Value
 from store.serializers import (
     AddProductImagesSerializer,
     CategoriesSerializer,
@@ -98,8 +98,7 @@ class ProductFilterListView(generics.ListAPIView):
         qs_category_in = qs_category.get_descendants(include_self=True)
         qs = Option.objects.filter(
             product_filter__category__in=qs_category,
-            product_filter__hide=False,
-            product_filter__position__isnull=False
+            product_filter__hide=False
         ) \
             .order_by('product_filter__position') \
             .prefetch_related(

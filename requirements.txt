@@ -15,7 +15,7 @@ django-mptt==0.14.0
 django-debug-toolbar==3.7.0
 django-filter==22.1
 ipython
-psycopg2-binary
 celery==5.2.7
 redis==4.5.1
 requests==2.28.2
+liqpay-python@ git+https://github.com/liqpay/sdk-python
