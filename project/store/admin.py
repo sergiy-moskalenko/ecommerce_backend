@@ -1,20 +1,12 @@
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 from mptt.admin import DraggableMPTTAdmin, TreeRelatedFieldListFilter
 
-from store.models import (
-    Category,
-    Favorite,
-    Product,
-    ProductFilter,
-    ProductImage,
-    ProductOptionValue,
-    Option,
-    Value,
-)
+from store import models
 
 
 class ProductImageAdminInline(admin.StackedInline):
-    model = ProductImage
+    model = models.ProductImage
     extra = 1
 
     def get_queryset(self, request):
@@ -24,12 +16,30 @@ class ProductImageAdminInline(admin.StackedInline):
 class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     list_display = ('name', 'price', 'discount_price', 'discount_percent', 'is_published',)
-    inlines = (
-        ProductImageAdminInline,
+    inlines = (ProductImageAdminInline,)
+    fieldsets = (
+        (None, {
+            'fields': (
+                'category',
+                ('name', 'slug'),
+                ('price', 'discount_price'),
+                'description',
+                'is_published',
+                ('image', 'headshot_image'),
+            )
+        }),
     )
 
+    readonly_fields = ["headshot_image"]
 
-admin.site.register(Product, ProductAdmin)
+    def headshot_image(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src={obj.image.url} width="15%" height="15%" />')
+
+    headshot_image.short_description = ''
+
+
+admin.site.register(models.Product, ProductAdmin)
 
 
 class CategoryAdmin(DraggableMPTTAdmin):
@@ -43,11 +53,11 @@ class CategoryAdmin(DraggableMPTTAdmin):
     )
 
 
-admin.site.register(Category, CategoryAdmin)
+admin.site.register(models.Category, CategoryAdmin)
 
 
 class ValueAdmin(admin.TabularInline):
-    model = Value
+    model = models.Value
 
 
 class OptionAdmin(admin.ModelAdmin):
@@ -56,7 +66,7 @@ class OptionAdmin(admin.ModelAdmin):
     ]
 
 
-admin.site.register(Option, OptionAdmin)
+admin.site.register(models.Option, OptionAdmin)
 
 
 class ProductOptionValueAdmin(admin.ModelAdmin):
@@ -64,20 +74,20 @@ class ProductOptionValueAdmin(admin.ModelAdmin):
     ordering = ('product', 'option')
 
 
-admin.site.register(ProductOptionValue, ProductOptionValueAdmin)
+admin.site.register(models.ProductOptionValue, ProductOptionValueAdmin)
 
 
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('product', 'user')
 
 
-admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(models.Favorite, FavoriteAdmin)
 
 
 class ProductFilterAdmin(admin.ModelAdmin):
     list_display = ('category', 'option', 'position', 'hide')
     ordering = ('-category', 'position')
-    list_filter = ('category', )
+    list_filter = ('category',)
 
 
-admin.site.register(ProductFilter, ProductFilterAdmin)
+admin.site.register(models.ProductFilter, ProductFilterAdmin)

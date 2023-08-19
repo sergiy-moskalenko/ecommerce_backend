@@ -133,7 +133,3 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description='customer')  # ordering=Concat("first_name", Value(" "), "last_name"),
     def full_name(self, obj):
         return obj.first_name + " " + obj.last_name
-
-    def save_model(self, request, obj, form, change):
-        obj.added_by = request.user
-        super().save_model(request, obj, form, change)

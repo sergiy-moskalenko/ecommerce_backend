@@ -2,7 +2,7 @@ from django.db.models import Prefetch
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
 
-from store.models import Category, Product, Option, Value, ProductImage
+from store import models
 
 
 class FavoriteMixin:
@@ -16,7 +16,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
     children = SerializerMethodField()
 
     class Meta:
-        model = Category
+        model = models.Category
         fields = ('name', 'slug', 'children',)
 
     def get_children(self, obj):
@@ -26,7 +26,7 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Product
+        model = models.Product
         fields = ('name', 'description', 'price', 'discount_price', 'image', 'category')
 
 
@@ -34,13 +34,13 @@ class ProductListSerializer(FavoriteMixin, serializers.ModelSerializer):
     favorite = serializers.SerializerMethodField()
 
     class Meta:
-        model = Product
+        model = models.Product
         fields = ('image', 'name', 'price', 'discount_price', 'favorite')
 
 
 class ValueSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Value
+        model = models.Value
         fields = ('id', 'name',)
 
 
@@ -48,7 +48,7 @@ class ProductOptionSerializer(serializers.ModelSerializer):
     values = serializers.SerializerMethodField()
 
     class Meta:
-        model = Option
+        model = models.Option
         fields = ('id', 'name', 'values')
 
     def get_values(self, obj):
@@ -62,14 +62,14 @@ class ProductDetailSerializer(FavoriteMixin, serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
 
     class Meta:
-        model = Product
+        model = models.Product
         fields = ('name', 'image', 'price', 'description', 'options', 'favorite', 'images')
 
     def get_options(self, obj):
-        qs_options = Option.objects.filter(products_options__product=obj).distinct().prefetch_related(
+        qs_options = models.Option.objects.filter(products_options__product=obj).distinct().prefetch_related(
             Prefetch(
                 'values',
-                queryset=Value.objects.filter(products_values__product=obj),
+                queryset=models.Value.objects.filter(products_values__product=obj),
                 to_attr='product_values'
             )
         )
@@ -90,14 +90,14 @@ class AddProductImagesSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = Product
+        model = models.Product
         fields = ('images',)
 
     def create(self, validated_data):
         images = validated_data['images']
         product = validated_data['product']
-        objs = [ProductImage(product=product, image=image) for image in images]
-        ProductImage.objects.bulk_create(objs)
+        objs = [models.ProductImage(product=product, image=image) for image in images]
+        models.ProductImage.objects.bulk_create(objs)
         return product
 
 

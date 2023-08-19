@@ -6,7 +6,6 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from accounts.models import User
-from ecommerce.celery import app
 
 
 @shared_task
@@ -38,8 +37,3 @@ def send_reset_password_task(username, to_email):
         recipient_list=[to_email],
         fail_silently=False,
     )
-
-# test task for send every second
-# @app.task
-# def send_ok():
-#     return 'OK'

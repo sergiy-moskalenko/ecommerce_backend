@@ -12,7 +12,7 @@ class CustomOrderFilter(filters.OrderingFilter):
         ]
 
     def filter(self, qs, value):
-        if any(v in ['price', '-price'] for v in value):
+        if value and any(v in ['price', '-price'] for v in value):
             if '-price' in value:
                 qs = qs.order_by(Coalesce('discount_price', 'price').desc())
             if 'price' in value:

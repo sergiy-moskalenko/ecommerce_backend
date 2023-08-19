@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from rest_framework.serializers import ListField
-from django.conf import settings
 from order import models
 from order.validation import CardValidator
 
@@ -15,7 +13,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderListCreateSerializer(serializers.ModelSerializer):
     customer_id = serializers.HiddenField(default=serializers.CurrentUserDefault(), source='customer', write_only=True)
     # products
-    items = OrderItemSerializer(many=True, write_only=True)  # == items = ListField(child=OrderItemSerializer())
+    items = OrderItemSerializer(many=True, write_only=True)
     # card fields
     card = serializers.CharField(min_length=16, max_length=16, validators=[CardValidator()],
                                  required=False, write_only=True)
