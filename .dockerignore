@@ -1,0 +1,18 @@
+**/*.pyc
+**/*__pycache__
+.idea
+.git
+.venv
+.*ignore
+README.md
+project/media/
+project/log
+# Celery stuff
+project/celerybeat-schedule
+project/celerybeat.pid
+# docker
+Dockerfile
+docker-compose.yml
+# Environments
+.env
+.env.template

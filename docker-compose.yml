@@ -1,0 +1,121 @@
+version: "3.8"
+
+services:
+
+  # serveo
+  serveo:
+    container_name: 'serveo_web'
+    image: taichunmin/serveo
+    tty: true
+    stdin_open: true
+    command: "ssh -o ServerAliveInterval=60 -R 80:web:8000 -o \"StrictHostKeyChecking no\" serveo.net"
+    networks: [ 'ecom' ]
+    depends_on:
+      - web
+
+  # Django
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: web
+    volumes:
+      - ./project/:/usr/src/app/
+    ports:
+      - "8000:8000"
+    env_file: docker/env-example/.env.django
+    image: web:ecom_web
+    container_name: "ecom_web_ctr"
+    command: /docker-entrypoint.sh
+    networks: [ 'ecom' ]
+    depends_on:
+      - db
+
+  # PostgreSQL
+  db:
+    container_name: "ecom_postgres15"
+    image: postgres:15
+    hostname: db
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    env_file: docker/env-example/.env.postgresql
+    networks: [ 'ecom' ]
+
+  # Redis
+  redis:
+    container_name: "ecom_redis"
+    image: "redis"
+    hostname: redis
+    networks: [ 'ecom' ]
+
+  # RabbitMQ
+  rabbitmq:
+    container_name: "ecom_rabbitmq"
+    restart: always
+    hostname: rabbitmq
+    image: rabbitmq:3.11-management
+    env_file: docker/env-example/.env.django
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq:rw
+    networks: [ 'ecom' ]
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  # Celery worker
+  celery-worker:
+    container_name: "ecom_celery-worker"
+    restart: always
+    build:
+      context: .
+    hostname: worker
+    command: "celery -A core worker -l info"
+    volumes:
+      - ./project/:/usr/src/app/
+    env_file: docker/env-example/.env.django
+    networks: [ 'ecom' ]
+    depends_on:
+      - rabbitmq
+
+  # Celery beat
+  celery-beat:
+    container_name: "ecom_celery-beat"
+    restart: always
+    build:
+      context: .
+    command: "celery -A core beat -l info"
+    volumes:
+      - ./project/:/usr/src/app/
+    env_file: docker/env-example/.env.django
+    networks: [ 'ecom' ]
+    depends_on:
+      - rabbitmq
+      - celery-worker
+
+  # Flower
+  flower:
+    container_name: "ecom_flower"
+    build:
+      context: .
+    hostname: flower
+    command: "celery -A core flower --port=5555"
+    volumes:
+      - ./project/:/usr/src/app/
+    env_file: docker/env-example/.env.django
+    networks: [ 'ecom' ]
+    depends_on:
+      - rabbitmq
+    ports:
+      - '5555:5555'
+
+volumes:
+  db_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+
+networks:
+  ecom:
+    driver: bridge

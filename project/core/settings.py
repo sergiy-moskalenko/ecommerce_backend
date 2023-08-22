@@ -227,5 +227,5 @@ TG_CHAT_ID = os.environ.get('TG_CHAT_ID')
 LIQPAY_PUBLIC_KEY = os.environ.get('LIQPAY_PUBLIC_KEY')
 LIQPAY_PRIVATE_KEY = os.environ.get('LIQPAY_PRIVATE_KEY')
 
-# ngrok
-DOMAIN = 'https://dd6d-194-44-179-71.ngrok-free.app/'
+# https://serveo.net/
+DOMAIN = 'https://reverti.serveo.net'
