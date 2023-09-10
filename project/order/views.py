@@ -1,19 +1,30 @@
 import logging
 
 from django.db.models import Prefetch
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from order import models
+from order import models, schemas
 from order import payment
-from order.permissions import IsOrderByCustomer
 from order import serializers
+from order.permissions import IsOrderByCustomer
 from order.tgbot import send_message_to_tg
 
 logger = logging.getLogger(__name__)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary="Get a list of orders",
+    ),
+    post=extend_schema(
+        summary="Creating order",
+        responses=schemas.ORDER_POST_RESPONSES,
+        examples=schemas.ORDER_POST_EXAMPLES,
+    ),
+)
 class OrderListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsOrderByCustomer]
     serializer_class = serializers.OrderListCreateSerializer
@@ -72,6 +83,12 @@ class OrderListCreateView(generics.ListCreateAPIView):
                         headers=headers)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary="Get order by ID",
+        responses=schemas.ORDER_DETAIL_RESPONSES,
+    ),
+)
 class OrderDetailView(generics.RetrieveAPIView):
     permission_classes = [IsOrderByCustomer]
     serializer_class = serializers.OrderDetailSerializer
@@ -86,6 +103,7 @@ class OrderDetailView(generics.RetrieveAPIView):
         ).filter(customer=user)
 
 
+@extend_schema(exclude=True)
 class PayCallbackView(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data.get('data')

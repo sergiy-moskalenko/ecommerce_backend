@@ -6,8 +6,8 @@ from order.validation import CardValidator
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.OrderItem
-        fields = ('id', 'order', 'product', 'price', 'discount_price', 'quantity', 'cost')
-        read_only_fields = ('order', 'price', 'discount_price')
+        fields = ('id', 'product', 'price', 'discount_price', 'quantity', 'cost')
+        read_only_fields = ('order', 'price', 'discount_price', 'cost')
 
 
 class OrderListCreateSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class OrderListCreateSerializer(serializers.ModelSerializer):
                   'card', 'card_exp_month', 'card_exp_year', 'card_cvv',)
         read_only_fields = ('total_cost', 'paid',)
         extra_kwargs = {
-            'payment_mode': {'required': True},
+            'payment_mode': {'required': True, 'write_only': True},
             'first_name': {'write_only': True},
             'last_name': {'write_only': True},
             'phone_number': {'write_only': True},
@@ -94,4 +94,5 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Order
         fields = ('id', 'first_name', 'last_name', 'phone_number',
-                  'address', 'city', 'items', 'paid', 'total_cost',)
+                  'address', 'city', 'items', 'total_cost',
+                  'order_status', 'payment_status')

@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'mptt',
     # 'debug_toolbar',
     'django_filters',
-
+    'drf_spectacular',
     'accounts.apps.AccountsConfig',
     'order.apps.OrderConfig',
     'store.apps.StoreConfig',
@@ -143,7 +143,8 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # SMTP
@@ -229,3 +230,24 @@ LIQPAY_PRIVATE_KEY = os.environ.get('LIQPAY_PRIVATE_KEY')
 
 # https://serveo.net/
 DOMAIN = 'https://reverti.serveo.net'
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Ecommerce API',
+    'DESCRIPTION': 'Ecommerce API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_PATCH': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SHOW_REQUEST_BODY': True,
+    'SHOW_RESPONSE_BODY': True,
+    'DEFAULT_MODEL_DEPTH': None,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+        # 'defaultModelsExpandDepth': -1,
+        'defaultModelExpandDepth': 6,
+        'displayRequestDuration': True,
+        # 'tryItOutEnabled': True,
+    },
+}

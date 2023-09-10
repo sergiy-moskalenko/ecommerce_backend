@@ -7,7 +7,7 @@ from accounts.models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=128, min_length=6,
+    password = serializers.CharField(max_length=128, min_length=8,
                                      write_only=True,
                                      style={'input_type': 'password'},
                                      trim_whitespace=False,
