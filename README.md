@@ -1,10 +1,6 @@
-<h1 style="text-align: center;">Ecommerce</h1>
-
----
+<h1 align="center">Ecommerce</h1>
 
 ## Description
-
----
 
 This is an e-commerce API developed using Django and Django Rest Framework. It offers numerous features, including user
 registration, authentication, product list viewing, individual product viewing, view filters for a specific category of
@@ -12,8 +8,6 @@ products, order placement, and order viewing. Integration with the LiqPay paymen
 Additionally, a notification system is implemented to send messages to managers on Telegram when orders are placed.
 
 ## Technologies Used
-
----
 
 - Django
 - Django Rest Framework
@@ -24,8 +18,6 @@ Additionally, a notification system is implemented to send messages to managers 
 - Docker / Docker Compose
 
 ## Project setup
-
----
 
 **NOTE:** The project uses Python 3.10, so need it installed first. It is recommended to
 use [pyenv](https://github.com/pyenv/pyenv) for installation.
@@ -99,9 +91,9 @@ Here is an instruction on how to set up the project for development:
     python project/manage.py createsuperuser
     ```
 14. Run the server:
-   ```bash
-   python project/manage.py runserver
-   ```
+    ```bash
+    python project/manage.py runserver
+    ```
 15. Run the serveo:
     ```bash
     ssh -R 80:localhost:8000 serveo.net
@@ -113,15 +105,13 @@ Here is an instruction on how to set up the project for development:
 
 ### Use with Docker
 
----
-
 For local development (from `ecommerce_backend/` directory):
 
 ```bash
 docker-compose -f docker-compose.yml up -d --build
 ```
 
-Run log Run the serveo, and copy url, example `https://reverti.serveo.net` then paste in settings.py
+Run log Run the serveo, and copy url, example `https://reverti.serveo.net` then paste in `settings.py`
 
 ```bash
 docker logs serveo_web   
@@ -137,7 +127,6 @@ docker exec -it ecom_web_ctr python manage.py createsuperuser
 
 ## Features
 
-___
 This e-commerce API offers a wide range of features to enhance the user experience and streamline online shopping:
 
 - **User Registration and Authorization:** Users can register and obtain authorization, allowing them to access various
@@ -156,7 +145,6 @@ This e-commerce API offers a wide range of features to enhance the user experien
 
 ## Docs
 
----
 The documentation for the API and the rest of its endpoints are available at:
 
 http://localhost:8000/api/doc/
