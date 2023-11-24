@@ -1,19 +1,10 @@
-from smtplib import SMTPException
-
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import BadHeaderError
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import exceptions, generics, permissions, status
-from rest_framework.authtoken.models import Token
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts import serializers, schemas
 from accounts.models import User
-from accounts.tasks import send_verify_email_task
-from core.celery import app
 
 
 @extend_schema_view(
@@ -28,12 +19,9 @@ class RegisterView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user_data = serializer.validated_data
-        try:
-            send_verify_email_task.delay(user_data['username'], user_data['email'])
-        except (BadHeaderError, SMTPException):
-            return Response({'message': 'Failed retry after some time'}, status.HTTP_400_BAD_REQUEST)
+        validated_data = serializer.validated_data
+        user = User.objects.create_user(**validated_data)
+        user.send_confirm_email()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -41,8 +29,8 @@ class RegisterView(generics.CreateAPIView):
     summary="Confirm the user's email address",
     responses=schemas.VERIFY_EMAIL_POST_RESPONSES
 )
-class VerifyEmailView(generics.GenericAPIView):
-    serializer_class = serializers.VerifyEmailSerializer
+class ConfirmEmailView(generics.GenericAPIView):
+    serializer_class = serializers.ConfirmEmailSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -51,12 +39,10 @@ class VerifyEmailView(generics.GenericAPIView):
             user = User.objects.get(email_verify_token=serializer.validated_data['email_verify_token'])
         except User.DoesNotExist:
             return Response({'message': 'Invalid activation token'}, status.HTTP_400_BAD_REQUEST)
-        if user.is_active:
-            Response({'message': 'you have already verified your account'}, status.HTTP_200_OK)
-        else:
+        if not user.is_active:
             user.is_active = True
             user.save()
-        return Response({'message': 'Congrats! you just verified your account'}, status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
@@ -73,8 +59,7 @@ class LoginView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status.HTTP_201_CREATED)
+        return Response({'token': user.regenerate_auth_token()}, status.HTTP_201_CREATED)
 
 
 @extend_schema(
@@ -86,46 +71,36 @@ class LogoutView(APIView):
 
     def delete(self, request, *args, **kwargs):
         request.user.auth_token.delete()
-        return Response({'message': 'User Logged out successfully'}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(
-    summary="Reset password (send a verification token by email)",
+    summary="Password recovery",
     responses=schemas.PASSWORD_RESET_EMAIL_RESPONSES
 )
-class PasswordResetEmailView(generics.GenericAPIView):
-    serializer_class = serializers.PasswordResetEmailSerializer
+class PasswordRecoveryView(generics.GenericAPIView):
+    serializer_class = serializers.PasswordRecoverySerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        try:
-            app.send_task('accounts.tasks.send_reset_password_task', args=(user.username, user.email))
-        except (BadHeaderError, SMTPException):
-            return Response({'message': 'Failed retry after some time'}, status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'We have sent you a link to reset your password'}, status.HTTP_200_OK)
+        user.send_password_recovery()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(
-    summary="Reset password done",
+    summary="Set new password",
     responses=schemas.PASSWORD_RESET_DONE_RESPONSES
 )
-class PasswordResetDoneView(generics.GenericAPIView):
+class SetNewPasswordView(generics.GenericAPIView):
     serializer_class = serializers.SetNewPasswordSerializer
 
-    def patch(self, request, *args, **kwargs):
-        try:
-            pk = force_str(urlsafe_base64_decode(request.data['uid']))
-            instance = User.objects.get(id=int(pk))
-            if not default_token_generator.check_token(instance, request.data['token']):
-                raise exceptions.AuthenticationFailed({'message': 'The reset link is invalid'}, 401)
-        except User.DoesNotExist:
-            raise exceptions.ValidationError({'message': "User doesn't exits"}, 404)
-        serializer = self.get_serializer(data=request.data, instance=instance, partial=True)
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({'success': True, 'message': 'Password reset success'}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
@@ -135,6 +110,8 @@ class PasswordResetDoneView(generics.GenericAPIView):
     patch=extend_schema(exclude=True)
 )
 class ChangePasswordView(generics.UpdateAPIView):
-    queryset = User.objects.all()
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.ChangePasswordSerializer
+
+    def get_object(self):
+        return self.request.user

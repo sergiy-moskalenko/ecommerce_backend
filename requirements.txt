@@ -1,11 +1,11 @@
 #python 3.10
 asgiref==3.5.2
-Django==4.1.10
+Django==4.1.10  # 4.1.13
 django-phonenumber-field==7.0.0
 djangorestframework==3.14.0
 phonenumbers==8.12.56
 phonenumberslite==8.12.56
-Pillow==9.3.0
+Pillow==9.3.0  # 10.0.1
 psycopg2==2.9.4
 pytz==2022.4
 sqlparse==0.4.4
@@ -21,3 +21,11 @@ flower==2.0.0
 requests==2.31.0
 liqpay-python@ git+https://github.com/liqpay/sdk-python
 drf-spectacular==0.26.4
+# for tests
+pytest==7.4.2
+pytest-django==4.5.2
+faker==19.10.0
+factory-boy==3.3.0
+pytest-factoryboy==2.6.0
+pytest-cov==4.1.0
+pytest-mock==3.12.0

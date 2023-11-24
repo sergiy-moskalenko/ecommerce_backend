@@ -22,24 +22,17 @@ REGISTER_POST_RESPONSES = {
                              ),
                              OpenApiExample(
                                  name="Bad request 2",
-                                 value={'email': "Email fields didn't match."},
+                                 value={'email': "user with this email already exists."},
                              ),
                          ]),
 }
 
 VERIFY_EMAIL_POST_RESPONSES = {
-    200: {
-        'properties': properties_msg,
-        'example': {'message': 'you have already verified your account'}
-    },
-    201: {
-        'properties': properties_msg,
-        'example': {'message': 'Congrats! you just verified your account'}
-    },
+    204: {},
     400: {
         'properties': properties_msg,
         'example': {'message': 'Invalid activation token'}
-    },
+    }
 }
 
 LOGIN_RESPONSES = {
@@ -57,31 +50,29 @@ LOGIN_RESPONSES = {
                          examples=[
                              OpenApiExample(
                                  name="Bad request 1",
-                                 value={'email': "User with this email doesn't exits"},
-                             ),
-                             OpenApiExample(
-                                 name="Bad request 2",
                                  value={'message': "Incorrect Login credentials"},
                              ),
                              OpenApiExample(
-                                 name="Bad request 3",
+                                 name="Bad request 2",
                                  value={'message': "Please check your inbox and verify your email address"},
                              ),
                          ]),
+    404: {
+        'properties': {'detail': {'type': 'string'}},
+        'example': {"detail": "Not found."}
+    }
 }
 
 LOGOUT_RESPONSES = {
-    200: {
-        'properties': properties_msg,
-        'example': {'message': 'User Logged out successfully'}
-    },
+    204: {},
+    401: {
+        'properties': {'detail': {'type': 'string'}},
+        'example': {"detail": "Authentication credentials were not provided."}
+    }
 }
 
 PASSWORD_RESET_EMAIL_RESPONSES = {
-    200: {
-        'properties': properties_msg,
-        'example': {'message': 'We have sent you a link to reset your password'}
-    },
+    204: {},
     400: OpenApiResponse(description='Bad request (something invalid)',
                          response=inline_serializer(
                              name='password_reset_email_msg',
@@ -91,33 +82,30 @@ PASSWORD_RESET_EMAIL_RESPONSES = {
                          ),
                          examples=[
                              OpenApiExample(
-                                 name="Bad request 1",
+                                 name="Bad request",
                                  value={'message': 'Failed retry after some time'},
-                             ),
-                             OpenApiExample(
-                                 name="Bad request 2",
-                                 value={'email': "User with this email doesn't exits"},
-                             ),
+                             )
                          ]),
+    404: {
+        'properties': {'detail': {'type': 'string'}},
+        'example': {"detail": "Not found."}
+    }
 }
 
 PASSWORD_RESET_DONE_RESPONSES = {
-    200: {
-        'properties': {'success': {'type': 'bool'}, 'message': {'type': 'string'}},
-        'example': {'success': True, 'message': 'Password reset success'}
-    },
+    204: {},
     400: {
         'properties': properties_msg,
         'example': {'message': 'Failed retry after some time'}
     },
     401: {
         'properties': properties_msg,
-        'example': {'message': 'The reset link is invalid'}
+        'example': {'message': 'Invalid user or token'}
     },
     404: {
-        'properties': properties_msg,
-        'example': {'message': "User doesn't exits"}
-    },
+        'properties': {'detail': {'type': 'string'}},
+        'example': {"detail": "Not found."}
+    }
 }
 
 CHANGE_PASSWORD_RESPONSES = {

@@ -102,6 +102,10 @@ Here is an instruction on how to set up the project for development:
 
     ![DOMAIN](https://github.com/MrH3dg3h0g/ecommerce_backend/assets/102657228/69b0f9da-b2d0-4ec3-8d06-8f0d9fe3fefd)
 16. Download and install: [Redis](https://redis.io/download/), [RabbitMQ](https://www.rabbitmq.com/download.html).
+17. Run tests:
+    ```bash
+    pytest -s project/tests/
+    ```
 
 ### Use with Docker
 
@@ -149,4 +153,4 @@ The documentation for the API and the rest of its endpoints are available at:
 
 http://localhost:8000/api/doc/
 
-![Endpoints](https://github.com/MrH3dg3h0g/ecommerce_backend/assets/102657228/2e9f1592-a07a-4bb9-ae48-9ddc60314e1e)
+![Endpoints](https://github.com/sergiy-moskalenko/ecommerce_backend/assets/102657228/204889c1-5d61-496e-bae1-415a316b252f)

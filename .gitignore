@@ -1,6 +1,10 @@
+__pycache__/
 /.env
 /.idea/
 /venv/
 /project/media/
 /project/log/
 /project/celerybeat-schedule
+/project/htmlcov/
+/project/.pytest_cache/
+

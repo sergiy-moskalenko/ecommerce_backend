@@ -177,13 +177,13 @@ LOGGING = {
         'file_tgbot': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'log/tgbot.log',
+            'filename': BASE_DIR / 'logs/tgbot.log',
             'formatter': 'verbose',
         },
         'file_payment': {
             'level': 'WARNING',
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'log/payment.log',
+            'filename': BASE_DIR / 'logs/payment.log',
             'formatter': 'verbose',
         },
         'console': {
@@ -207,10 +207,14 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': True,
         },
-        'django.db.backends': {
+        # 'django.db.backends': {
+        #     'handlers': ['console'],
+        #     'level': 'DEBUG',
+        # },
+        'tests': {
             'handlers': ['console'],
-            'level': 'DEBUG',
-        },
+            'level': 'INFO',
+        }
     },
 }
 
@@ -244,7 +248,7 @@ SPECTACULAR_SETTINGS = {
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
         'persistAuthorization': True,
-        'displayOperationId': True,
+        # 'displayOperationId': True,
         # 'defaultModelsExpandDepth': -1,
         'defaultModelExpandDepth': 6,
         'displayRequestDuration': True,
