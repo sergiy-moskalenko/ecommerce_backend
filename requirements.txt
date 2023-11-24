@@ -1,6 +1,6 @@
 #python 3.10
 asgiref==3.5.2
-Django==4.1.10  # 4.1.13
+Django==4.1.13  # 4.1.13
 django-phonenumber-field==7.0.0
 djangorestframework==3.14.0
 phonenumbers==8.12.56
