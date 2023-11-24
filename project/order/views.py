@@ -1,5 +1,6 @@
 import logging
 
+from django.db import transaction
 from django.db.models import Prefetch
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, status
@@ -45,6 +46,40 @@ class OrderListCreateView(generics.ListCreateAPIView):
         return sum(self.get_cost(item)
                    for item in items_data)
 
+    @staticmethod
+    def process_payment(card_data, order_instance, payment_mode):
+        if payment_mode == models.PaymentMode.CARD:
+            result_pay = payment.LiqPayCard(
+                order_id=str(order_instance.id),
+                amount=str(order_instance.total_cost),
+                phone=str(order_instance.phone_number),
+                **card_data
+            )
+            result_pay.api()
+
+    @staticmethod
+    def send_order_notification(order_instance):
+        msg_to_tg = f'Order #{order_instance.id} number phone client {order_instance.phone_number}'
+        send_message_to_tg(msg_to_tg)
+
+    def create_order_items(self, items_data, order_instance):
+        order_items = [models.OrderItem(
+            order=order_instance,
+            product=item['product'],
+            price=item['product'].price,
+            discount_price=item['product'].discount_price,
+            quantity=item['quantity'],
+            cost=self.get_cost(item)
+        )
+            for item in items_data]
+        models.OrderItem.objects.bulk_create(order_items)
+
+    @staticmethod
+    def create_order_instance(data, total_cost):
+        order_instance = models.Order.objects.create(**data, total_cost=total_cost)
+        return order_instance
+
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -55,28 +90,11 @@ class OrderListCreateView(generics.ListCreateAPIView):
         payment_mode = data.get('payment_mode')
         card_data = {k: data.pop(k) for (k, v) in data.copy().items() if 'card' in k}
         total_cost = self.get_total_cost(items_data)
-        order_instance = models.Order.objects.create(**data, total_cost=total_cost)
-        objs = [models.OrderItem(order=order_instance,
-                                 product=item['product'],
-                                 price=item['product'].price,
-                                 discount_price=item['product'].discount_price,
-                                 quantity=item['quantity'],
-                                 cost=self.get_cost(item)
-                                 )
-                for item in items_data]
-        models.OrderItem.objects.bulk_create(objs)
 
-        msg_to_tg = f'Order #{order_instance.id} number phone client {order_instance.phone_number}'
-        send_message_to_tg(msg_to_tg)
-
-        if payment_mode == models.PaymentMode.CARD:
-            result_pay = payment.LiqPayCard(
-                order_id=str(order_instance.id),
-                amount=str(order_instance.total_cost),
-                phone=str(order_instance.phone_number),
-                **card_data
-            )
-            result_pay.api()
+        order_instance = self.create_order_instance(data, total_cost)
+        self.create_order_items(items_data, order_instance)
+        self.send_order_notification(order_instance)
+        self.process_payment(card_data, order_instance, payment_mode)
 
         return Response({'order_number': order_instance.id},
                         status=status.HTTP_201_CREATED,
@@ -123,4 +141,5 @@ class PayCallbackView(APIView):
             models.PaymentData.objects.create(order_id=order_id, data=res_data)
         except models.Order.DoesNotExist:
             logger.error(f"Order not found:\n{res_data}")
-        return Response({"result": "ok"})
+            return Response('Order not found', status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)

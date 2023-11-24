@@ -19,12 +19,12 @@ class CardValidator:
         if not self.is_valid(value):
             raise serializers.ValidationError(self.message)
 
-    def _digit_check(self, cc_number):
+    def _digit_check(self, cc_number: str):
         if not cc_number.isdecimal():
             raise serializers.ValidationError(self.message)
         return cc_number
 
-    def _luhn_check(self, cc_number):
+    def _luhn_check(self, cc_number: str):
         digits = list(map(int, self._digit_check(cc_number)))
         odd_sum = sum(digits[-1::-2])
         even_sum = sum([sum(divmod(2 * d, 10)) for d in digits[-2::-2]])
@@ -35,5 +35,5 @@ class CardValidator:
             if regexp.match(self._digit_check(cc_number)[:4]):
                 return True
 
-    def is_valid(self, cc_number):
+    def is_valid(self, cc_number: str):
         return self._luhn_check(cc_number) and self._iin_check(cc_number)

@@ -25,7 +25,7 @@ class OrderListCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Order
         fields = ('id', 'customer_id', 'first_name', 'last_name', 'phone_number',
-                  'city', 'address', 'items', 'total_cost', 'payment_mode', 'paid', 'total_cost',
+                  'city', 'address', 'items', 'total_cost', 'payment_mode', 'paid',
                   'card', 'card_exp_month', 'card_exp_year', 'card_cvv',)
         read_only_fields = ('total_cost', 'paid',)
         extra_kwargs = {
@@ -34,6 +34,11 @@ class OrderListCreateSerializer(serializers.ModelSerializer):
             'last_name': {'write_only': True},
             'phone_number': {'write_only': True},
         }
+
+    def update_customer_data(self, customer, first_name, last_name):
+        customer.first_name = first_name
+        customer.last_name = last_name
+        customer.save()
 
     def validate_items(self, value):
         if not value:
@@ -46,45 +51,35 @@ class OrderListCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        errors_dict = dict()
-        error_msg = 'This field may not be blank.'
-        request = self.context.get('request')
-        first_name = attrs.get('first_name')
-        last_name = attrs.get('last_name')
-        phone_number = attrs.get('phone_number')
-
+        customer = attrs.get('customer')
         payment_mode = attrs.get('payment_mode')
-        card = attrs.get('card')
-        card_exp_month = attrs.get('card_exp_month')
-        card_exp_year = attrs.get('card_exp_year')
-        card_cvv = attrs.get('card_cvv')
 
-        if not request.user.is_authenticated:
-            if not first_name:
-                errors_dict.update({'first_name': error_msg})
-            if not last_name:
-                errors_dict.update({'last_name': error_msg})
-            if not phone_number:
-                errors_dict.update({'phone_number': error_msg})
-            attrs['customer_id'] = None
-            if errors_dict:
-                raise serializers.ValidationError(errors_dict)
+        error_msg = 'This field may not be blank.'
+
+        # Validation for non-authenticated users
+        if not customer.is_authenticated:
+            user_fields = ('first_name', 'last_name', 'phone_number')  # required_fields
+            user_errors = {field: error_msg for field in user_fields if not attrs.get(field)}  # missing_fields
+            if user_errors:
+                raise serializers.ValidationError(user_errors)
+            attrs['customer'] = None
+        else:  # Authenticated users
+            if not customer.first_name or not customer.last_name:
+                user_fields = ('first_name', 'last_name')
+                user_errors = {field: error_msg for field in user_fields if not attrs.get(field)}
+                if user_errors:
+                    raise serializers.ValidationError(user_errors)
+
+                self.update_customer_data(customer, attrs['first_name'], attrs['last_name'])
 
         if payment_mode == models.PaymentMode.CARD:
-            if not card:
-                errors_dict.update({'card': error_msg})
-            if not card_exp_month:
-                errors_dict.update({'card_exp_month': error_msg})
-            if not card_exp_year:
-                errors_dict.update({'card_exp_year': error_msg})
-            if not card_cvv:
-                errors_dict.update({'card_cvv': error_msg})
+            card_fields = ('card', 'card_exp_month', 'card_exp_year', 'card_cvv')
+            card_errors = {field: error_msg for field in card_fields if not attrs.get(field)}
+            if card_errors:
+                raise serializers.ValidationError(card_errors)
 
-            if errors_dict:
-                raise serializers.ValidationError(errors_dict)
-
-            attrs['card_exp_month'] = card_exp_month.strftime('%m')
-            attrs['card_exp_year'] = card_exp_year.strftime('%y')
+            attrs['card_exp_month'] = attrs.get('card_exp_month').strftime('%m')
+            attrs['card_exp_year'] = attrs.get('card_exp_year').strftime('%y')
         return attrs
 
 
