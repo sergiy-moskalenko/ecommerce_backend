@@ -9,5 +9,5 @@ urlpatterns = [
     path('product/create', views.ProductCreateView.as_view()),
     path('product/<slug:slug>', views.ProductDetailView.as_view()),
     path('product/<slug:slug>/add/images', views.AddProductImagesView.as_view()),
-    path('product/favorite/<slug:slug>', views.FavoriteProductAddDeleteView.as_view()),
+    path('product/<slug:slug>/favorite', views.FavoriteProductAddDeleteView.as_view()),
 ]

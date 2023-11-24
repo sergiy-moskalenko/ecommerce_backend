@@ -2,16 +2,32 @@ from django.db.models import Prefetch, Max, Min
 from django.db.models.functions import Coalesce
 from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import generics, status
-from rest_framework.generics import get_object_or_404
-from rest_framework import permissions
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from store.filters import ProductFilter, product_filter
-from store import models
-from store import serializers
-from store import schemas
+from store import filters as product_filters
+from store import models, schemas, serializers
+
+
+def get_filtered_categories(category_slug):
+    qs_category = models.Category.objects.filter(slug=category_slug)
+    return qs_category.get_descendants(include_self=True)
+
+
+def get_filtered_options(qs_category, qs_categories):
+    return models.Option.objects.filter(
+        product_filter__category__in=qs_category,
+        product_filter__hide=False
+    ).order_by('product_filter__position').prefetch_related(
+        Prefetch(
+            'values',
+            queryset=models.Value.objects.filter(
+                products_values__product__category__in=qs_categories
+            ).distinct(),
+            to_attr='product_values'
+        )
+    )
 
 
 @extend_schema_view(
@@ -45,25 +61,22 @@ class ProductCreateView(generics.CreateAPIView):
 )
 class ProductListView(generics.ListAPIView):
     serializer_class = serializers.ProductListSerializer
+    permission_classes = (permissions.AllowAny,)
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = product_filters.ProductFilter
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):  # drf-yasg comp
             return models.Product.objects.none()
-
-        qs_category = models.Category.objects.filter(slug=self.kwargs['slug'])
-        qs_category_in = qs_category.get_descendants(include_self=True)
-        qs = models.Product.objects.filter(category__in=qs_category_in)
+        qs_categories = get_filtered_categories(self.kwargs['slug'])
+        qs = models.Product.objects.filter(category__in=qs_categories)
         user = self.request.user
-        # qs = product_filter(qs, self.request.query_params)
+        # qs = product_filters.product_filter(qs, self.request.query_params)
         if user.is_authenticated:
             return qs.prefetch_related(
                 Prefetch('favorites', queryset=models.Favorite.objects.filter(user=self.request.user))
             )
         return qs
-
-    permission_classes = (permissions.AllowAny,)
-    filter_backends = (filters.DjangoFilterBackend,)
-    filterset_class = ProductFilter
 
 
 @extend_schema(
@@ -94,7 +107,7 @@ class FavoriteProductAddDeleteView(APIView):
 
     def post(self, request, *args, **kwargs):
         product_slug = self.kwargs['slug']
-        product = get_object_or_404(models.Product, slug=product_slug)
+        product = generics.get_object_or_404(models.Product, slug=product_slug)
         is_exists = product.favorites.filter(user=request.user).exists()
         if not is_exists:
             models.Favorite.objects.create(product=product, user=request.user)
@@ -117,7 +130,7 @@ class AddProductImagesView(generics.CreateAPIView):
     queryset = models.Product.objects.all()
 
     def perform_create(self, serializer):
-        product = get_object_or_404(models.Product, slug=self.kwargs.get('slug'))
+        product = generics.get_object_or_404(models.Product, slug=self.kwargs.get('slug'))
         serializer.save(product=product)
 
 
@@ -132,28 +145,18 @@ class ProductFilterListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs_category = models.Category.objects.filter(slug=self.kwargs['slug'])
-        qs_category_in = qs_category.get_descendants(include_self=True)
-        qs = models.Option.objects.filter(
-            product_filter__category__in=qs_category,
-            product_filter__hide=False
-        ) \
-            .order_by('product_filter__position') \
-            .prefetch_related(
-            Prefetch('values',
-                     queryset=models.Value.objects.filter(
-                         products_values__product__category__in=qs_category_in).distinct(),
-                     to_attr='product_values')
-        )
+        qs_categories = qs_category.get_descendants(include_self=True)
+        qs = get_filtered_options(qs_category, qs_categories)
         return qs
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         product_price = Coalesce('discount_price', 'price')
-        qs_category = models.Category.objects.filter(slug=self.kwargs['slug'])
-        qs_category_in = qs_category.get_descendants(include_self=True)
-        response_data = models.Product.objects.filter(category__in=qs_category_in).aggregate(
+        qs_categories = get_filtered_categories(self.kwargs['slug'])
+        response_data = models.Product.objects.filter(category__in=qs_categories).aggregate(
             price_min=Min(product_price),
-            price_max=Max(product_price))
+            price_max=Max(product_price)
+        )
         response_data['options'] = response.data
         response.data = response_data
         return response

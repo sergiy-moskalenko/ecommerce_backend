@@ -104,7 +104,8 @@ Here is an instruction on how to set up the project for development:
 16. Download and install: [Redis](https://redis.io/download/), [RabbitMQ](https://www.rabbitmq.com/download.html).
 17. Run tests:
     ```bash
-    pytest -s project/tests/
+    cd project
+    pytest -s tests/
     ```
 
 ### Use with Docker

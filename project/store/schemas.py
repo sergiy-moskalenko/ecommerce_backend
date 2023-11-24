@@ -95,6 +95,7 @@ FAVORITE_DELETE_RESPONSES = {
         'properties': properties_detail,
         'example': {'detail': 'User deleted product'}
     },
+    404: response_404,
 }
 
 PRODUCT_CREATE_IMAGES_RESPONSES = {

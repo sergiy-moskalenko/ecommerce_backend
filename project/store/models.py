@@ -1,7 +1,8 @@
+from math import ceil
+
 from django.core.validators import ValidationError
 from django.db import models
 from django.utils.text import slugify
-from math import ceil
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 from unidecode import unidecode

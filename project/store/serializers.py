@@ -12,6 +12,7 @@ class FavoriteMixin:
         request = self.context.get('request')
         if request.user.is_authenticated:
             return obj.favorites.exists()
+        return False
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
